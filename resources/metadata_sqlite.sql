@@ -148,7 +148,9 @@ CREATE TABLE last_read_positions ( id INTEGER PRIMARY KEY,
 );
 
 CREATE TABLE annotations ( id INTEGER PRIMARY KEY,
-	book INTEGER NOT NULL,
+	book INTEGER NOT NULL  
+    references books
+            on delete cascade,
 	format TEXT NOT NULL COLLATE NOCASE,
 	user_type TEXT NOT NULL,
 	user TEXT NOT NULL,

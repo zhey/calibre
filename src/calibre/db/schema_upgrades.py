@@ -705,7 +705,9 @@ CREATE TABLE annotations_dirtied(id INTEGER PRIMARY KEY,
                              UNIQUE(book));
 DROP TABLE IF EXISTS annotations;
 CREATE TABLE annotations ( id INTEGER PRIMARY KEY,
-    book INTEGER NOT NULL,
+    book INTEGER NOT NULL
+    references books
+            on delete cascade,
     format TEXT NOT NULL COLLATE NOCASE,
     user_type TEXT NOT NULL,
     user TEXT NOT NULL,
