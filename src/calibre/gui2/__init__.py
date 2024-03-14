@@ -16,7 +16,7 @@ from qt.core import (
     QFontDatabase, QFontInfo, QFontMetrics, QGuiApplication, QIcon, QImageReader,
     QImageWriter, QIODevice, QLocale, QNetworkProxyFactory, QObject, QPalette,
     QResource, QSettings, QSocketNotifier, QStringListModel, Qt, QThread, QTimer,
-    QTranslator, QUrl, pyqtSignal, pyqtSlot,
+    QTranslator, QUrl, QWidget, pyqtSignal, pyqtSlot,
 )
 from threading import Lock, RLock
 
@@ -47,6 +47,7 @@ from polyglot.builtins import iteritems, string_or_bytes
 
 del pqc, geometry_for_restore_as_dict
 NO_URL_FORMATTING = QUrl.UrlFormattingOption.None_
+BOOK_DETAILS_DISPLAY_DEBOUNCE_DELAY = 100  # 100 ms is threshold for human visual response
 
 
 class IconResourceManager:
@@ -294,9 +295,9 @@ def create_defs():
         defs['action-layout-menubar-device'] = ()
         defs['action-layout-toolbar'] = (
             'Add Books', 'Edit Metadata', None, 'Convert Books', 'View', None,
-            'Store', 'Donate', 'Fetch News', 'Help', None,
-            'Remove Books', 'Choose Library', 'Save To Disk',
-            'Connect Share', 'Tweak ePub', 'Preferences',
+            'Store', 'Donate', 'Fetch News', 'Help', None, 'Preferences',
+            'Remove Books', 'Choose Library', 'Save To Disk', 'Connect Share',
+            'Tweak ePub',
             )
         defs['action-layout-toolbar-device'] = (
             'Add Books', 'Edit Metadata', None, 'Convert Books', 'View',
@@ -427,6 +428,11 @@ def create_defs():
     defs['show_notes_in_tag_browser'] = False
     defs['icons_on_right_in_tag_browser'] = True
     defs['cover_browser_narrow_view_position'] = 'automatic'
+    defs['dark_palette_name'] = ''
+    defs['light_palette_name'] = ''
+    defs['dark_palettes'] = {}
+    defs['light_palettes'] = {}
+    defs['saved_layouts'] = {}
 
     def migrate_tweak(tweak_name, pref_name):
         # If the tweak has been changed then leave the tweak in the file so
@@ -1140,7 +1146,7 @@ class Application(QApplication):
         self.file_event_hook = None
         if override_program_name:
             args = [override_program_name] + args[1:]
-        self.palette_manager = PaletteManager(gprefs['color_palette'], gprefs['ui_style'], force_calibre_style, headless)
+        self.palette_manager = PaletteManager(force_calibre_style, headless)
         if headless:
             args.extend(('-platformpluginpath', plugins_loc, '-platform', 'headless'))
         else:
@@ -1680,3 +1686,32 @@ def timed_print(*a, **kw):
     if not hasattr(timed_print, 'startup_time'):
         timed_print.startup_time = monotonic()
     print(f'[{monotonic() - timed_print.startup_time:.2f}]', *a, **kw)
+
+
+def local_path_for_resource(qurl: QUrl, base_qurl: 'QUrl | None' = None) -> str:
+    if base_qurl and qurl.isRelative():
+        qurl = base_qurl.resolved(qurl)
+
+    if qurl.isLocalFile():
+        return qurl.toLocalFile()
+    if qurl.isRelative():  # this means has no scheme
+        return qurl.path()
+    return ''
+
+
+def raise_and_focus(self: QWidget) -> None:
+    self.raise_()
+    self.activateWindow()
+
+
+def raise_without_focus(self: QWidget) -> None:
+    if QApplication.instance().platformName() == 'wayland':
+        # On fucking Wayland, we cant raise a dialog without also giving it
+        # keyboard focus. What a joke.
+        self.raise_and_focus()
+    else:
+        self.raise_()
+
+
+QWidget.raise_and_focus = raise_and_focus
+QWidget.raise_without_focus = raise_without_focus
