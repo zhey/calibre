@@ -6,10 +6,8 @@ __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
 import os
 import sys
-from qt.core import (
-    QCheckBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout, QIcon, QKeySequence,
-    QLabel, QSize, QSpinBox, Qt, QToolBar, QVBoxLayout,
-)
+
+from qt.core import QCheckBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout, QIcon, QKeySequence, QLabel, QSize, QSpinBox, Qt, QToolBar, QVBoxLayout
 
 from calibre.gui2 import gprefs
 from calibre.gui2.tweak_book.editor.canvas import Canvas
@@ -98,7 +96,7 @@ class TrimImage(QDialog):
                                    ac.shortcut().toString(QKeySequence.SequenceFormat.NativeText)))
         ac.setEnabled(False)
         self.size_selection = ac = self.bar.addAction(QIcon.ic('resize.png'), _('&Region'), self.do_region)
-        ac.setToolTip(_('Specify a selection size using numbers to allow for precise control'))
+        ac.setToolTip(_('Specify a selection region size using numbers to allow for precise control'))
         c.selection_state_changed.connect(self.selection_changed)
         c.selection_area_changed.connect(self.selection_area_changed)
         l.addWidget(c)
